@@ -1,0 +1,21 @@
+{
+    "id": "test-scanner",
+    "rabbitmq": {
+        "host": "localhost",
+        "port": 1883,
+        "user": "guest",
+        "password": "guest"
+    },
+    "tuners": [
+        {
+            "name": "4.9-6 GHz",
+            "type": "rx5808",
+            "createArgs": {
+                "pin_mosi": 55,
+                "pin_clk": 54,
+                "pin_cs": 53,
+                "rssi": 0
+            }
+        }
+    ]
+}
