@@ -71,8 +71,6 @@ def prev(tuner_idx):
 
 def on_message(client, userdata, msg):
     payload = json.loads(msg.payload)
-    print(payload)
-    return
     if (payload["scanner_id"] != scanner_id):
         return
     action = payload["action"]
@@ -100,11 +98,11 @@ if __name__ == '__main__':
         file.close()
 
     client = mqtt.Client()
-    client.username_pw_set(config["rabbitmq"]["user"], config["rabbitmq"]["password"])
+    client.username_pw_set(config["mqtt"]["user"], config["mqtt"]["password"])
     client.on_message = on_message
     client.on_connect = on_connect
 
-    client.connect(config["rabbitmq"]["host"], config["rabbitmq"]["port"], 60)
+    client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
 
     scanner_id = config["id"]
     

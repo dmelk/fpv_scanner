@@ -1,6 +1,6 @@
 {
     "id": "test-scanner",
-    "rabbitmq": {
+    "mqtt": {
         "host": "localhost",
         "port": 1883,
         "user": "guest",
