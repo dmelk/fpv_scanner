@@ -22,18 +22,15 @@ def scan(tuner_idx):
     tuner = tunderData.tuner
     if (tunderData.attempts == 0):
         tuner.next()
-        client.publish(out_topic, json.dumps({
-            "scanner_id": scanner_id,
-            "action": "frequency_change",
-            "value": tuner.getFrequency(),
-            "tuner_idx": tuner_idx
-        }))
+        publishFrequency(tuner_idx)
     if tuner.isSignalStrong():
         client.publish(out_topic, json.dumps({
             "scanner_id": scanner_id,
             "action": "signal_found",
-            "value": tuner.getFrequency(),
-            "tuner_idx": tuner_idx
+            "value": tuner.getFrequencyIdx(),
+            "frequency": tuner.getFrequency(),
+            "tuner_idx": tuner_idx,
+            "config": tuner.getConfig(),
         }))
         tunderData.scanning = False
         tunderData.attempts = 0
@@ -48,12 +45,7 @@ def next(tuner_idx):
     tunderData.attempts == 0
     tuner = tunderData.tuner
     tuner.next()
-    client.publish(out_topic, json.dumps({
-        "scanner_id": scanner_id,
-        "action": "frequency_change",
-        "value": tuner.getFrequency(),
-        "tuner_idx": tuner_idx
-    }))
+    publishFrequency(tuner_idx)
 
 def prev(tuner_idx):
     tunderData: TunerData = tuners[tuner_idx]
@@ -61,13 +53,38 @@ def prev(tuner_idx):
     tunderData.attempts == 0
     tuner = tunderData.tuner
     tuner.prev()
+    publishFrequency(tuner_idx)
+
+def skip(tuner_idx):
+    tunderData: TunerData = tuners[tuner_idx]
+    tunderData.attempts == 0
+    tuner = tunderData.tuner
+    tuner.skipFrequency(tuner.getFrequencyIdx())
+    tuner.next()
+    publishFrequency(tuner_idx)
+
+def clearSkip(tuner_idx, idx, all = False):
+    tunderData: TunerData = tuners[tuner_idx]
+    tuner = tunderData.tuner
+    tuner.clearSkip(idx, all)
+    client.publish(out_topic, json.dumps({
+        "scanner_id": scanner_id,
+        "action": "clear_skip",
+         "tuner_idx": tuner_idx,
+        "config": tuner.getConfig(),
+    }))
+
+def publishFrequency(tuner_idx):
+    tunderData: TunerData = tuners[tuner_idx]
+    tuner = tunderData.tuner
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
         "action": "frequency_change",
-        "value": tuner.getFrequency(),
+        "value": tuner.getFrequencyIdx(),
+        "frequency": tuner.getFrequency(),
+        "config": tuner.getConfig(),
         "tuner_idx": tuner_idx
     }))
-
 
 def on_message(client, userdata, msg):
     payload = json.loads(msg.payload)
@@ -75,6 +92,8 @@ def on_message(client, userdata, msg):
         return
     action = payload["action"]
     tuner_idx = payload["tuner_idx"]
+    if (tuner_idx >= len(tuners)):
+        return
     if (action == "scan"):
         tuners[tuner_idx].scanning = True
         return
@@ -86,6 +105,12 @@ def on_message(client, userdata, msg):
         return
     if (action == "prev"):
         prev(tuner_idx)
+        return
+    if (action == "skip"):
+        skip(tuner_idx)
+        return
+    if (action == "clear_skip"):
+        clearSkip(tuner_idx, payload["value"], payload["all"])
         return
     
 def on_connect(client, userdata, flags, reason_code):
@@ -108,19 +133,17 @@ if __name__ == '__main__':
     
     tuner_factory = TunerFactory()
     tuners = []
+    tuner_configs = []
     for tuner_config in config["tuners"]:
         tuner = tuner_factory.create_tuner(tuner_config["type"], tuner_config["createArgs"])
         tuners.append(TunerData(tuner, 0, False))
-
-    tuner_frequncies = []
-    for tuner in tuners:
-        tuner_frequncies.append(tuner.tuner.getFrequency())
+        tuner_configs.append(tuner.getConfig())
 
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
         "action": "ready",
         "config": config,
-        "tuner_frequncies": tuner_frequncies
+        "tuner_configs": tuner_configs
     }))
 
     while True:

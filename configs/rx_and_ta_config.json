@@ -14,7 +14,19 @@
                 "pin_mosi": 55,
                 "pin_clk": 54,
                 "pin_cs": 53,
-                "rssi": 0
+                "rssi": 0,
+                "min": 0,
+                "max": 88
+            }
+        },
+        {
+            "name": "0.9-1.5 Ghz",
+            "type": "ta8804",
+            "createArgs": {
+                "i2c": 4,
+                "rssi": 1,
+                "min": 900,
+                "max": 1500
             }
         }
     ]
