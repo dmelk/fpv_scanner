@@ -10,6 +10,7 @@
         {
             "name": "4.9-6 GHz",
             "type": "rx5808",
+            "rssi_threshold": 840,
             "createArgs": {
                 "pin_mosi": 55,
                 "pin_clk": 54,
@@ -22,11 +23,12 @@
         {
             "name": "0.9-1.5 Ghz",
             "type": "ta8804",
+            "rssi_threshold": 740,
             "createArgs": {
-                "i2c": 4,
+                "i2c": 3,
                 "rssi": 1,
-                "min": 900,
-                "max": 1500
+                "min": 880,
+                "max": 1800
             }
         }
     ]

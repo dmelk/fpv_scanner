@@ -74,6 +74,17 @@ def clearSkip(tuner_idx, idx, all = False):
         "config": tuner.getConfig(),
     }))
 
+def tune(tuner_idx, rssi_threshold):
+    tunderData: TunerData = tuners[tuner_idx]
+    tuner = tunderData.tuner
+    tuner.setRssiTrheshold(rssi_threshold)
+    client.publish(out_topic, json.dumps({
+        "scanner_id": scanner_id,
+        "action": "tune",
+         "tuner_idx": tuner_idx,
+        "config": tuner.getConfig(),
+    }))
+
 def publishFrequency(tuner_idx):
     tunderData: TunerData = tuners[tuner_idx]
     tuner = tunderData.tuner
@@ -109,6 +120,9 @@ def on_message(client, userdata, msg):
     if (action == "skip"):
         skip(tuner_idx)
         return
+    if (action == "tune"):
+        tune(tuner_idx, payload["value"])
+        return
     if (action == "clear_skip"):
         clearSkip(tuner_idx, payload["value"], payload["all"])
         return
@@ -135,7 +149,7 @@ if __name__ == '__main__':
     tuners = []
     tuner_configs = []
     for tuner_config in config["tuners"]:
-        tuner = tuner_factory.create_tuner(tuner_config["type"], tuner_config["createArgs"])
+        tuner = tuner_factory.create_tuner(tuner_config["type"], tuner_config['rssi_threshold'], tuner_config["createArgs"])
         tuners.append(TunerData(tuner, 0, False))
         tuner_configs.append(tuner.getConfig())
 

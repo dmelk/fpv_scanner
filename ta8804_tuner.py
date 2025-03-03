@@ -6,7 +6,7 @@ class Ta8804Tuner(AbstractTuner):
     max_frequency = 1500
     current_frequency = min_frequency
     frequency_step = 10
-    i2c = 3
+    i2c_bus = None
     rssi_file = None
     i2c_address = 0x60
 
@@ -14,11 +14,14 @@ class Ta8804Tuner(AbstractTuner):
 
     ADC_DIR = "/sys/bus/iio/devices/iio:device0"
 
-    def __init__(self, i2c, rssi, min, max):
+    def __init__(self, i2c, rssi, rssi_threshold, min, max):
         self.i2c = i2c
         self.rssi_file = f"{self.ADC_DIR}/in_voltage{rssi}_raw"
 
+        self.rssi_threshold = rssi_threshold
+
         self.skip_table = []
+        self.i2c_bus = smbus.SMBus(i2c)
 
         self.min_frequency = min
         self.max_frequency = max
@@ -47,7 +50,7 @@ class Ta8804Tuner(AbstractTuner):
         with open(self.rssi_file, "r") as file:
             value = float(file.read().strip())
             file.close()
-            return value > 840
+            return value > self.rssi_threshold
 
     def getFrequency(self):
         return self.current_frequency
@@ -70,20 +73,17 @@ class Ta8804Tuner(AbstractTuner):
         return {
             "frequency": self.getFrequency(),
             "frequency_idx": self.getFrequencyIdx(),
+            "rssi_threshold": self.rssi_threshold,
             "min_frequency": self.min_frequency,
             "max_frequency": self.max_frequency,
             "skip_table": self.skip_table
         }        
 
     def setFrequency(self, frequency):
-        delitel = frequency*8 + 3836
-        delitelH = delitel >> 8
+        delitel = frequency * 8 + 3836
+        delitelH = ( delitel >> 8 ) & 0XFF
         delitelL = delitel & 0XFF
 
-        i2c_bus = smbus.SMBus(self.i2c)
-        i2c_bus.write_byte(self.i2c_address, delitelH)
-        i2c_bus.write_byte(self.i2c_address, delitelL)
-        i2c_bus.write_byte(self.i2c_address, 0xCE)
-        i2c_bus.write_byte(self.i2c_address, 0x00)
-        i2c_bus.close()
-
+        self.i2c_bus.write_word_data(self.i2c_address, delitelH, delitelL)
+        self.i2c_bus.write_byte(self.i2c_address, 0xCE)
+        self.i2c_bus.write_byte(self.i2c_address, 0x00)

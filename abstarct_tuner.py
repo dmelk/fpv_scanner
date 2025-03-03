@@ -2,6 +2,8 @@ from abc import abstractmethod
 
 
 class AbstractTuner:
+    rssi_threshold = 1000
+
     @abstractmethod
     def next(self):
         raise NotImplementedError
@@ -33,3 +35,6 @@ class AbstractTuner:
     @abstractmethod
     def getConfig(self):
         raise NotImplementedError
+
+    def setRssiTrheshold(self, rssi_threshold):
+        self.rssi_threshold = rssi_threshold    

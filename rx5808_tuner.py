@@ -56,7 +56,7 @@ class Rx5808Tuner(AbstractTuner):
     max_frequency_idx = len(frequency_table) - 1
     current_frequency_idx = min_frequency_idx
 
-    def __init__(self, pin_mosi, pin_clk, pin_cs, rssi, min_idx, max_idx):
+    def __init__(self, pin_mosi, pin_clk, pin_cs, rssi, rssi_threshold, min_idx, max_idx):
         self.pin_mosi = pin_mosi
         self.pin_clk = pin_clk
         self.pin_cs = pin_cs
@@ -64,6 +64,7 @@ class Rx5808Tuner(AbstractTuner):
 
         self.min_frequency_idx = min_idx
         self.max_frequency_idx = max_idx
+        self.rssi_threshold = rssi_threshold
 
         self.skip_table = []
 
@@ -94,7 +95,7 @@ class Rx5808Tuner(AbstractTuner):
         with open(self.rssi_file, "r") as file:
             value = float(file.read().strip())
             file.close()
-            return value > 840
+            return value > self.rssi_threshold
     
     def getFrequency(self):
         return self.frequency_table[self.current_frequency_idx]
@@ -117,6 +118,7 @@ class Rx5808Tuner(AbstractTuner):
         return {
             "frequency": self.getFrequency(),
             "frequency_idx": self.getFrequencyIdx(),
+            "rssi_threshold": self.rssi_threshold,
             "min_frequency": self.frequency_table[self.min_frequency_idx],
             "max_frequency": self.frequency_table[self.max_frequency_idx],
             "skip_table": self.skip_table
