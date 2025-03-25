@@ -13,28 +13,28 @@ class AbstractTuner:
         raise NotImplementedError
     
     @abstractmethod
-    def isSignalStrong(self):
+    def is_signal_strong(self):
         raise NotImplementedError
     
     @abstractmethod
-    def getFrequency(self):
+    def get_frequency(self):
         raise NotImplementedError
     
     @abstractmethod
-    def getFrequencyIdx(self):
+    def get_frequency_idx(self):
         raise NotImplementedError
     
     @abstractmethod
-    def skipFrequency(self, frequency_idx):
+    def skip_frequency(self, frequency_idx):
         raise NotImplementedError
     
     @abstractmethod
-    def clearSkip(self, frequency_idx, all = False):
+    def clear_skip(self, frequency_idx, all_values = False):
         raise NotImplementedError
     
     @abstractmethod
-    def getConfig(self):
+    def get_config(self):
         raise NotImplementedError
 
-    def setRssiTrheshold(self, rssi_threshold):
+    def set_rssi_threshold(self, rssi_threshold):
         self.rssi_threshold = rssi_threshold    

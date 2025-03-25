@@ -69,9 +69,9 @@ class Rx5808Tuner(AbstractTuner):
         self.skip_table = []
 
         # set initial frequency to before step
-        self.enableSpiMode()
+        self.enable_spi_mode()
         self.current_frequency_idx = self.min_frequency_idx
-        self.setFrequency(self.frequency_table[self.current_frequency_idx])
+        self.set_frequency(self.frequency_table[self.current_frequency_idx])
 
     def next(self):
         self.current_frequency_idx += 1            
@@ -80,7 +80,7 @@ class Rx5808Tuner(AbstractTuner):
         if (self.current_frequency_idx in self.skip_table):
             self.next()
             return
-        self.setFrequency(self.frequency_table[self.current_frequency_idx])
+        self.set_frequency(self.frequency_table[self.current_frequency_idx])
     
     def prev(self):
         self.current_frequency_idx -= 1
@@ -89,42 +89,42 @@ class Rx5808Tuner(AbstractTuner):
         if (self.current_frequency_idx in self.skip_table):
             self.prev()
             return
-        self.setFrequency(self.frequency_table[self.current_frequency_idx])
+        self.set_frequency(self.frequency_table[self.current_frequency_idx])
 
-    def isSignalStrong(self):
+    def is_signal_strong(self):
         with open(self.rssi_file, "r") as file:
             value = float(file.read().strip())
             file.close()
             return value > self.rssi_threshold
     
-    def getFrequency(self):
+    def get_frequency(self):
         return self.frequency_table[self.current_frequency_idx]
 
-    def getFrequencyIdx(self):
+    def get_frequency_idx(self):
         return self.current_frequency_idx
     
-    def skipFrequency(self, frequency_idx):
+    def skip_frequency(self, frequency_idx):
         if (frequency_idx not in self.skip_table):
             self.skip_table.append(frequency_idx)
 
-    def clearSkip(self, frequency_idx, all = False):
-        if (all):
+    def clear_skip(self, frequency_idx, all_values = False):
+        if (all_values):
             self.skip_table = []
         else:
             if (frequency_idx in self.skip_table):
                 self.skip_table.remove(frequency_idx)
 
-    def getConfig(self):
+    def get_config(self):
         return {
-            "frequency": self.getFrequency(),
-            "frequency_idx": self.getFrequencyIdx(),
+            "frequency": self.get_frequency(),
+            "frequency_idx": self.get_frequency_idx(),
             "rssi_threshold": self.rssi_threshold,
             "min_frequency": self.frequency_table[self.min_frequency_idx],
             "max_frequency": self.frequency_table[self.max_frequency_idx],
             "skip_table": self.skip_table
         }
 
-    def enableSpiMode(self):
+    def enable_spi_mode(self):
         self.write_mosi = GPIO(self.pin_mosi, "out")
         self.write_clk = GPIO(self.pin_clk, "out")
         self.write_cs = GPIO(self.pin_cs, "out")
@@ -141,15 +141,15 @@ class Rx5808Tuner(AbstractTuner):
         self.write_cs.close()
         self.spi_mode_enabled = False
 
-    def setFrequency(self, frequency):
+    def set_frequency(self, frequency):
         freq = (frequency - 479) // 2
         data = ((freq // 32) << 7) | (freq % 32)
         newRegisterData = self.reg_b  | (self.write_cntrl_bit << 4) | (data << 5)
-        self.writeRegister(newRegisterData)
+        self.write_register(newRegisterData)
 
-    def writeRegister(self, buf):
+    def write_register(self, buf):
         if (not self.spi_mode_enabled):
-            self.enableSpiMode()
+            self.enable_spi_mode()
         period_sec = 100.0 / self.bit_bang_freq
 
         self.write_cs.write(self.low)
