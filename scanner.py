@@ -10,8 +10,8 @@ class TunerData:
         self.attempts = attempts
         self.scanning = scanning
 
-max_attempts = 5
-tick_time = 0.2
+max_attempts = 2
+tick_time = 0.05
 
 out_topic = "scanner_out"
 
@@ -43,7 +43,7 @@ def stop(tuner_idx):
     tunderData: TunerData = tuners[tuner_idx]
     tunderData.scanning = False
     tunderData.attempts == 0
-    publishFrequency(tuner_idx)
+    publish_frequency(tuner_idx)
 
 def next(tuner_idx):
     tunderData: TunerData = tuners[tuner_idx]
