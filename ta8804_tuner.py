@@ -14,7 +14,7 @@ class Ta8804Tuner(AbstractTuner):
 
     ADC_DIR = "/sys/bus/iio/devices/iio:device0"
 
-    def __init__(self, i2c, rssi, rssi_threshold, min, max):
+    def __init__(self, i2c, rssi, rssi_threshold, min_frequency, max_frequency):
         self.i2c = i2c
         self.rssi_file = f"{self.ADC_DIR}/in_voltage{rssi}_raw"
 
@@ -23,63 +23,63 @@ class Ta8804Tuner(AbstractTuner):
         self.skip_table = []
         self.i2c_bus = smbus.SMBus(i2c)
 
-        self.min_frequency = min
-        self.max_frequency = max
+        self.min_frequency = min_frequency
+        self.max_frequency = max_frequency
         self.current_frequency = self.min_frequency
-        self.setFrequency(self.current_frequency)
+        self.set_frequency(self.current_frequency)
 
     def next(self):
         self.current_frequency += self.frequency_step
-        if (self.current_frequency > self.max_frequency):
+        if self.current_frequency > self.max_frequency:
             self.current_frequency = self.min_frequency
-        if (self.current_frequency in self.skip_table):
+        if self.current_frequency in self.skip_table:
             self.next()
             return
-        self.setFrequency(self.current_frequency)
+        self.set_frequency(self.current_frequency)
 
     def prev(self):
         self.current_frequency -= self.frequency_step
-        if (self.current_frequency < self.min_frequency):
+        if self.current_frequency < self.min_frequency:
             self.current_frequency = self.max_frequency
-        if (self.current_frequency in self.skip_table):
+        if self.current_frequency in self.skip_table:
             self.prev()
             return
-        self.setFrequency(self.current_frequency)
+        self.set_frequency(self.current_frequency)
 
-    def isSignalStrong(self):
+    def is_signal_strong(self):
         with open(self.rssi_file, "r") as file:
             value = float(file.read().strip())
             file.close()
             return value > self.rssi_threshold
 
-    def getFrequency(self):
+    def get_frequency(self):
         return self.current_frequency
 
-    def getFrequencyIdx(self):
+    def get_frequency_idx(self):
         return self.current_frequency
 
-    def skipFrequency(self, frequency_idx):
-        if (frequency_idx not in self.skip_table):
+    def skip_frequency(self, frequency_idx):
+        if frequency_idx not in self.skip_table:
             self.skip_table.append(frequency_idx)
 
-    def clearSkip(self, frequency_idx, all = False):
-        if (all):
+    def clear_skip(self, frequency_idx, all_values = False):
+        if all_values:
             self.skip_table = []
         else:
-            if (frequency_idx in self.skip_table):
+            if frequency_idx in self.skip_table:
                 self.skip_table.remove(frequency_idx)
 
-    def getConfig(self):
+    def get_config(self):
         return {
-            "frequency": self.getFrequency(),
-            "frequency_idx": self.getFrequencyIdx(),
+            "frequency": self.get_frequency(),
+            "frequency_idx": self.get_frequency_idx(),
             "rssi_threshold": self.rssi_threshold,
             "min_frequency": self.min_frequency,
             "max_frequency": self.max_frequency,
             "skip_table": self.skip_table
         }        
 
-    def setFrequency(self, frequency):
+    def set_frequency(self, frequency):
         delitel = frequency * 8 + 3836
         delitelH = ( delitel >> 8 ) & 0XFF
         delitelL = delitel & 0XFF

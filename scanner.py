@@ -22,15 +22,15 @@ def scan(tuner_idx):
     tuner = tunderData.tuner
     if (tunderData.attempts == 0):
         tuner.next()
-        publishFrequency(tuner_idx)
-    if tuner.isSignalStrong():
+        publish_frequency(tuner_idx)
+    if tuner.is_signal_strong():
         client.publish(out_topic, json.dumps({
             "scanner_id": scanner_id,
             "action": "signal_found",
-            "value": tuner.getFrequencyIdx(),
-            "frequency": tuner.getFrequency(),
+            "value": tuner.get_frequency_idx(),
+            "frequency": tuner.get_frequency(),
             "tuner_idx": tuner_idx,
-            "config": tuner.getConfig(),
+            "config": tuner.get_config(),
         }))
         tunderData.scanning = False
         tunderData.attempts = 0
@@ -51,7 +51,7 @@ def next(tuner_idx):
     tunderData.attempts == 0
     tuner = tunderData.tuner
     tuner.next()
-    publishFrequency(tuner_idx)
+    publish_frequency(tuner_idx)
 
 def prev(tuner_idx):
     tunderData: TunerData = tuners[tuner_idx]
@@ -59,47 +59,47 @@ def prev(tuner_idx):
     tunderData.attempts == 0
     tuner = tunderData.tuner
     tuner.prev()
-    publishFrequency(tuner_idx)
+    publish_frequency(tuner_idx)
 
 def skip(tuner_idx):
     tunderData: TunerData = tuners[tuner_idx]
     tunderData.attempts == 0
     tuner = tunderData.tuner
-    tuner.skipFrequency(tuner.getFrequencyIdx())
+    tuner.skip_frequency(tuner.get_frequency_idx())
     tuner.next()
-    publishFrequency(tuner_idx)
+    publish_frequency(tuner_idx)
 
-def clearSkip(tuner_idx, idx, all = False):
+def clear_skip(tuner_idx, idx, all_values = False):
     tunderData: TunerData = tuners[tuner_idx]
     tuner = tunderData.tuner
-    tuner.clearSkip(idx, all)
+    tuner.clear_skip(idx, all_values)
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
         "action": "clear_skip",
-         "tuner_idx": tuner_idx,
-        "config": tuner.getConfig(),
+        "tuner_idx": tuner_idx,
+        "config": tuner.get_config(),
     }))
 
 def tune(tuner_idx, rssi_threshold):
     tunderData: TunerData = tuners[tuner_idx]
     tuner = tunderData.tuner
-    tuner.setRssiTrheshold(rssi_threshold)
+    tuner.set_rssi_threshold(rssi_threshold)
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
         "action": "tune",
-         "tuner_idx": tuner_idx,
-        "config": tuner.getConfig(),
+        "tuner_idx": tuner_idx,
+        "config": tuner.get_config(),
     }))
 
-def publishFrequency(tuner_idx):
+def publish_frequency(tuner_idx):
     tunderData: TunerData = tuners[tuner_idx]
     tuner = tunderData.tuner
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
         "action": "frequency_change",
-        "value": tuner.getFrequencyIdx(),
-        "frequency": tuner.getFrequency(),
-        "config": tuner.getConfig(),
+        "value": tuner.get_frequency_idx(),
+        "frequency": tuner.get_frequency(),
+        "config": tuner.get_config(),
         "tuner_idx": tuner_idx
     }))
 
@@ -130,7 +130,7 @@ def on_message(client, userdata, msg):
         tune(tuner_idx, payload["value"])
         return
     if (action == "clear_skip"):
-        clearSkip(tuner_idx, payload["value"], payload["all"])
+        clear_skip(tuner_idx, payload["value"], payload["all_values"] == '1')
         return
     
 def on_connect(client, userdata, flags, reason_code):
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     for tuner_config in config["tuners"]:
         tuner = tuner_factory.create_tuner(tuner_config["type"], tuner_config['rssi_threshold'], tuner_config["createArgs"])
         tuners.append(TunerData(tuner, 0, False))
-        tuner_configs.append(tuner.getConfig())
+        tuner_configs.append(tuner.get_config())
 
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
