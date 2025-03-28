@@ -10,17 +10,19 @@ class TunerData:
         self.attempts = attempts
         self.scanning = scanning
 
-max_attempts = 2
+max_attempts = 4
 tick_time = 0.05
+
+ping_time = 1 / tick_time
 
 out_topic = "scanner_out"
 
 def scan(tuner_idx):
-    tunderData: TunerData = tuners[tuner_idx]
-    if (not tunderData.scanning):
+    tunerData: TunerData = tuners[tuner_idx]
+    if (not tunerData.scanning):
         return
-    tuner = tunderData.tuner
-    if (tunderData.attempts == 0):
+    tuner = tunerData.tuner
+    if tunerData.attempts == 0:
         tuner.next()
         publish_frequency(tuner_idx)
     if tuner.is_signal_strong():
@@ -31,75 +33,79 @@ def scan(tuner_idx):
             "frequency": tuner.get_frequency(),
             "tuner_idx": tuner_idx,
             "config": tuner.get_config(),
+            "scanning": False,
         }))
-        tunderData.scanning = False
-        tunderData.attempts = 0
+        tunerData.scanning = False
+        tunerData.attempts = 0
         return
-    tunderData.attempts += 1
-    if (tunderData.attempts == max_attempts):
-        tunderData.attempts = 0
+    tunerData.attempts += 1
+    if tunerData.attempts == max_attempts:
+        tunerData.attempts = 0
 
 def stop(tuner_idx):
-    tunderData: TunerData = tuners[tuner_idx]
-    tunderData.scanning = False
-    tunderData.attempts == 0
+    tunerData: TunerData = tuners[tuner_idx]
+    tunerData.scanning = False
+    tunerData.attempts == 0
     publish_frequency(tuner_idx)
 
 def next(tuner_idx):
-    tunderData: TunerData = tuners[tuner_idx]
-    tunderData.scanning = False
-    tunderData.attempts == 0
-    tuner = tunderData.tuner
+    tunerData: TunerData = tuners[tuner_idx]
+    tunerData.scanning = False
+    tunerData.attempts == 0
+    tuner = tunerData.tuner
     tuner.next()
     publish_frequency(tuner_idx)
 
 def prev(tuner_idx):
-    tunderData: TunerData = tuners[tuner_idx]
-    tunderData.scanning = False
-    tunderData.attempts == 0
-    tuner = tunderData.tuner
+    tunerData: TunerData = tuners[tuner_idx]
+    tunerData.scanning = False
+    tunerData.attempts == 0
+    tuner = tunerData.tuner
     tuner.prev()
     publish_frequency(tuner_idx)
 
 def skip(tuner_idx):
-    tunderData: TunerData = tuners[tuner_idx]
-    tunderData.attempts == 0
-    tuner = tunderData.tuner
+    tunerData: TunerData = tuners[tuner_idx]
+    tunerData.attempts == 0
+    tuner = tunerData.tuner
     tuner.skip_frequency(tuner.get_frequency_idx())
     tuner.next()
     publish_frequency(tuner_idx)
 
 def clear_skip(tuner_idx, idx, all_values = False):
-    tunderData: TunerData = tuners[tuner_idx]
-    tuner = tunderData.tuner
+    tunerData: TunerData = tuners[tuner_idx]
+    tuner = tunerData.tuner
     tuner.clear_skip(idx, all_values)
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
         "action": "clear_skip",
         "tuner_idx": tuner_idx,
         "config": tuner.get_config(),
+        "scanning": tunerData.scanning,
     }))
 
 def tune(tuner_idx, rssi_threshold):
-    tunderData: TunerData = tuners[tuner_idx]
-    tuner = tunderData.tuner
+    tunerData: TunerData = tuners[tuner_idx]
+    tuner = tunerData.tuner
     tuner.set_rssi_threshold(rssi_threshold)
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
         "action": "tune",
         "tuner_idx": tuner_idx,
         "config": tuner.get_config(),
+        "scanning": tunerData.scanning,
     }))
 
 def publish_frequency(tuner_idx):
-    tunderData: TunerData = tuners[tuner_idx]
-    tuner = tunderData.tuner
+    tunerData: TunerData = tuners[tuner_idx]
+    tuner = tunerData.tuner
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
         "action": "frequency_change",
         "value": tuner.get_frequency_idx(),
         "frequency": tuner.get_frequency(),
         "config": tuner.get_config(),
+        "scanning": tunerData.scanning,
         "tuner_idx": tuner_idx
     }))
 
@@ -157,7 +163,10 @@ if __name__ == '__main__':
     for tuner_config in config["tuners"]:
         tuner = tuner_factory.create_tuner(tuner_config["type"], tuner_config['rssi_threshold'], tuner_config["createArgs"])
         tuners.append(TunerData(tuner, 0, False))
-        tuner_configs.append(tuner.get_config())
+        tuner_configs.append({
+            "scanning": False,
+            "tuner": tuner.get_config()
+        })
 
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
@@ -166,8 +175,24 @@ if __name__ == '__main__':
         "tuner_configs": tuner_configs
     }))
 
+    ping_attempt = 0
     while True:
         client.loop(timeout=0.1)
         for i in range(len(tuners)):
             scan(i)
         time.sleep(tick_time)
+        ping_attempt += 1
+        if ping_attempt >= ping_time:
+            tuner_configs = []
+            for tuner in tuners:
+                tuner_configs.append({
+                    "scanning": tuner.scanning,
+                    "tuner": tuner.tuner.get_config()
+                })
+            client.publish(out_topic, json.dumps({
+                "scanner_id": scanner_id,
+                "action": "ping",
+                "config": config,
+                "tuner_configs": tuner_configs
+            }))
+            ping_attempt = 0
