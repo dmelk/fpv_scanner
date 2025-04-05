@@ -1,0 +1,37 @@
+{
+    "id": "test-scanner",
+    "mqtt": {
+        "host": "localhost",
+        "port": 1883,
+        "user": "guest",
+        "password": "guest"
+    },
+    "tuners": [
+        {
+            "name": "4.9-5.7 GHz",
+            "type": "rx5808",
+            "rssi_threshold": 840,
+            "createArgs": {
+                "pin_mosi": 55,
+                "pin_clk": 54,
+                "pin_cs": 53,
+                "rssi": 0,
+                "min": 0,
+                "max": 43
+            }
+        },
+        {
+            "name": "5.7-6 GHz",
+            "type": "rx5808",
+            "rssi_threshold": 840,
+            "createArgs": {
+                "pin_mosi": 49,
+                "pin_clk": 50,
+                "pin_cs": 51,
+                "rssi": 1,
+                "min": 44,
+                "max": 88
+            }
+        }
+    ]
+}

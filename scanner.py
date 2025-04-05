@@ -42,6 +42,12 @@ def scan(tuner_idx):
     if tunerData.attempts == max_attempts:
         tunerData.attempts = 0
 
+def start_scan(tuner_idx):
+    tunerData: TunerData = tuners[tuner_idx]
+    tunerData.scanning = True
+    tunerData.attempts == 0
+    publish_frequency(tuner_idx)
+
 def stop(tuner_idx):
     tunerData: TunerData = tuners[tuner_idx]
     tunerData.scanning = False
@@ -118,10 +124,10 @@ def on_message(client, userdata, msg):
     if (tuner_idx >= len(tuners)):
         return
     if (action == "scan"):
-        tuners[tuner_idx].scanning = True
+        start_scan(tuner_idx)
         return
     if (action == "stop"):
-        tuners[tuner_idx].scanning = False
+        stop(tuner_idx)
         return
     if (action == "next"):
         next(tuner_idx)
