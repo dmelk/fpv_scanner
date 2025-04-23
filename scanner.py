@@ -150,7 +150,7 @@ def on_connect(client, userdata, flags, reason_code):
     client.subscribe("scanner_in")
 
 if __name__ == '__main__':
-    with open("scanner_config.json", "r") as file:
+    with open("/fpv_scanner/scanner_config.json", "r") as file:
         config = json.load(file)
         file.close()
 
@@ -174,16 +174,36 @@ if __name__ == '__main__':
             "tuner": tuner.get_config()
         })
 
+    config_to_publish = {
+        "id": scanner_id,
+        "tuners": config["tuners"],
+    }
+
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
         "action": "ready",
-        "config": config,
+        "config": config_to_publish,
         "tuner_configs": tuner_configs
     }))
 
     ping_attempt = 0
     while True:
-        client.loop(timeout=0.1)
+        try:
+            client.loop(timeout=0.1)
+        except Exception as e:
+            print("MQTT loop error:", e)
+
+        if not client.is_connected():
+            try:
+                print("Reconnecting...")
+                client.reconnect()
+            except Exception as e:
+                print("Reconnect failed:", e)
+                time.sleep(1)  # prevent tight loop on failure
+            time.sleep(tick_time)
+            # do not scan if not connected
+            continue
+
         for i in range(len(tuners)):
             scan(i)
         time.sleep(tick_time)
@@ -198,7 +218,7 @@ if __name__ == '__main__':
             client.publish(out_topic, json.dumps({
                 "scanner_id": scanner_id,
                 "action": "ping",
-                "config": config,
+                "config": config_to_publish,
                 "tuner_configs": tuner_configs
             }))
             ping_attempt = 0

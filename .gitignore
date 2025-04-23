@@ -1,5 +1,6 @@
 .venv
 .vscode
+scanner_config_*.json
 scanner_config.json
 .idea
 ._*

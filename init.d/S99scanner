@@ -1,0 +1,27 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          myscript
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Start my Python script on boot
+### END INIT INFO
+
+case "$1" in
+  start)
+    echo "Starting my Python script"
+    /usr/bin/python3 /fpv_scanner/scanner.py &
+    ;;
+  stop)
+    echo "Stopping my Python script"
+    # Optional: kill it if you keep track of PID
+    ;;
+  *)
+    echo "Usage: /etc/init.d/myscript {start|stop}"
+    exit 1
+    ;;
+esac
+
+exit 0

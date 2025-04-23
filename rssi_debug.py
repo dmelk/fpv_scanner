@@ -1,5 +1,6 @@
 
 import time
+import sys
 
 
 def main(rssi):
@@ -13,5 +14,10 @@ def main(rssi):
     main(rssi)
 
 if __name__ == "__main__":
-    main(1)        
+    # read rssi from command line
+    if len(sys.argv) > 1:
+        rssi = int(sys.argv[1])
+    else:
+        rssi = 1
+    main(rssi)
 
