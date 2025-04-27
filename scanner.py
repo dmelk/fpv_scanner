@@ -17,6 +17,8 @@ ping_time = 1 / tick_time
 
 out_topic = "scanner_out"
 
+sw_version = "0.1.0"
+
 def scan(tuner_idx):
     tunerData: TunerData = tuners[tuner_idx]
     if (not tunerData.scanning):
@@ -182,6 +184,7 @@ if __name__ == '__main__':
     client.publish(out_topic, json.dumps({
         "scanner_id": scanner_id,
         "action": "ready",
+        "sw_version": sw_version,
         "config": config_to_publish,
         "tuner_configs": tuner_configs
     }))
@@ -218,6 +221,7 @@ if __name__ == '__main__':
             client.publish(out_topic, json.dumps({
                 "scanner_id": scanner_id,
                 "action": "ping",
+                "sw_version": sw_version,
                 "config": config_to_publish,
                 "tuner_configs": tuner_configs
             }))
