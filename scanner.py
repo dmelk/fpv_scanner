@@ -77,7 +77,7 @@ def set(tuner_idx, frequency):
     tunerData.scanning = False
     tunerData.attempts == 0
     tuner = tunerData.tuner
-    tuner.set(frequency)
+    tuner.set_frequency(frequency)
     publish_frequency(tuner_idx)
 
 def skip(tuner_idx):
