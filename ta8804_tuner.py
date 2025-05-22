@@ -26,7 +26,7 @@ class Ta8804Tuner(AbstractTuner):
         self.min_frequency = min_frequency
         self.max_frequency = max_frequency
         self.current_frequency = self.min_frequency
-        self.set_frequency(self.current_frequency)
+        self.tune_to_frequency()
 
     def next(self):
         self.current_frequency += self.frequency_step
@@ -35,7 +35,7 @@ class Ta8804Tuner(AbstractTuner):
         if self.current_frequency in self.skip_table:
             self.next()
             return
-        self.set_frequency(self.current_frequency)
+        self.tune_to_frequency()
 
     def prev(self):
         self.current_frequency -= self.frequency_step
@@ -44,7 +44,11 @@ class Ta8804Tuner(AbstractTuner):
         if self.current_frequency in self.skip_table:
             self.prev()
             return
-        self.set_frequency(self.current_frequency)
+        self.tune_to_frequency()
+
+    def set_frequency(self, frequency):
+        self.current_frequency = frequency
+        self.tune_to_frequency()
 
     def is_signal_strong(self):
         with open(self.rssi_file, "r") as file:
@@ -79,7 +83,8 @@ class Ta8804Tuner(AbstractTuner):
             "skip_table": self.skip_table
         }        
 
-    def set_frequency(self, frequency):
+    def tune_to_frequency(self):
+        frequency = self.current_frequency
         delitel = frequency * 8 + 3836
         delitelH = ( delitel >> 8 ) & 0XFF
         delitelL = delitel & 0XFF

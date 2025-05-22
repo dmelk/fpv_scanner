@@ -72,6 +72,14 @@ def prev(tuner_idx):
     tuner.prev()
     publish_frequency(tuner_idx)
 
+def set(tuner_idx, frequency):
+    tunerData: TunerData = tuners[tuner_idx]
+    tunerData.scanning = False
+    tunerData.attempts == 0
+    tuner = tunerData.tuner
+    tuner.set(frequency)
+    publish_frequency(tuner_idx)
+
 def skip(tuner_idx):
     tunerData: TunerData = tuners[tuner_idx]
     tunerData.attempts == 0
@@ -136,6 +144,9 @@ def on_message(client, userdata, msg):
         return
     if (action == "prev"):
         prev(tuner_idx)
+        return
+    if (action == "set"):
+        skip(tuner_idx, payload["value"])
         return
     if (action == "skip"):
         skip(tuner_idx)

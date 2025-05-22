@@ -1,6 +1,5 @@
 
 import time
-import sys
 from periphery import GPIO
 
 from abstarct_tuner import AbstractTuner
@@ -55,6 +54,7 @@ class Rx5808Tuner(AbstractTuner):
     min_frequency_idx = 0
     max_frequency_idx = len(frequency_table) - 1
     current_frequency_idx = min_frequency_idx
+    current_frequency = frequency_table[min_frequency_idx]
 
     def __init__(self, pin_mosi, pin_clk, pin_cs, rssi, rssi_threshold, min_idx, max_idx):
         self.pin_mosi = pin_mosi
@@ -71,25 +71,33 @@ class Rx5808Tuner(AbstractTuner):
         # set initial frequency to before step
         self.enable_spi_mode()
         self.current_frequency_idx = self.min_frequency_idx
-        self.set_frequency(self.frequency_table[self.current_frequency_idx])
+        self.current_frequency = self.frequency_table[self.current_frequency_idx]
+        self.tune_to_frequency()
 
     def next(self):
         self.current_frequency_idx += 1            
         if (self.current_frequency_idx > self.max_frequency_idx):
             self.current_frequency_idx = self.min_frequency_idx
+        self.current_frequency = self.frequency_table[self.current_frequency_idx]
         if (self.current_frequency_idx in self.skip_table):
             self.next()
             return
-        self.set_frequency(self.frequency_table[self.current_frequency_idx])
+        self.tune_to_frequency()
     
     def prev(self):
         self.current_frequency_idx -= 1
         if (self.current_frequency_idx < self.min_frequency_idx):
             self.current_frequency_idx = self.max_frequency_idx
+        self.current_frequency = self.frequency_table[self.current_frequency_idx]
         if (self.current_frequency_idx in self.skip_table):
             self.prev()
             return
-        self.set_frequency(self.frequency_table[self.current_frequency_idx])
+        self.tune_to_frequency()
+
+    def set_frequency(self, frequency):
+        self.current_frequency = frequency
+        self.current_frequency_idx = 0
+        self.tune_to_frequency()
 
     def is_signal_strong(self):
         with open(self.rssi_file, "r") as file:
@@ -98,7 +106,7 @@ class Rx5808Tuner(AbstractTuner):
             return value > self.rssi_threshold
     
     def get_frequency(self):
-        return self.frequency_table[self.current_frequency_idx]
+        return self.current_frequency
 
     def get_frequency_idx(self):
         return self.current_frequency_idx
@@ -141,7 +149,8 @@ class Rx5808Tuner(AbstractTuner):
         self.write_cs.close()
         self.spi_mode_enabled = False
 
-    def set_frequency(self, frequency):
+    def tune_to_frequency(self):
+        frequency = self.current_frequency
         freq = (frequency - 479) // 2
         data = ((freq // 32) << 7) | (freq % 32)
         newRegisterData = self.reg_b  | (self.write_cntrl_bit << 4) | (data << 5)

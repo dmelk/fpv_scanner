@@ -15,7 +15,11 @@ class AbstractTuner:
     @abstractmethod
     def is_signal_strong(self):
         raise NotImplementedError
-    
+
+    @abstractmethod
+    def set_frequency(self, frequency):
+        raise NotImplementedError
+
     @abstractmethod
     def get_frequency(self):
         raise NotImplementedError
