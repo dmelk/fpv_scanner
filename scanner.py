@@ -146,7 +146,7 @@ def on_message(client, userdata, msg):
         prev(tuner_idx)
         return
     if (action == "set"):
-        skip(tuner_idx, payload["value"])
+        set(tuner_idx, payload["value"])
         return
     if (action == "skip"):
         skip(tuner_idx)
